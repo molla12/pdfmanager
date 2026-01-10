@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PDF Manager - Ultra</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dukooy5f1/image/upload/v1685466452/my_logo_ao2nu4.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a; --header: #1e293b; --card: #1e293b; --text: #f8fafc;
+            --neon: #00f3ff; --pink: #ff00e6; --border: rgba(255,255,255,0.1);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --header: #ffffff; --card: #ffffff; --text: #1e293b;
+            --neon: #2563eb; --pink: #db2777; --border: rgba(0, 0, 0, 0.1);
+        }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; padding-bottom: 80px; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(10px); }
+        .spinner { width: 45px; height: 45px; border: 4px solid var(--border); border-top-color: var(--neon); border-radius: 50%; animation: spin 1s infinite linear; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        header { background: var(--header); padding: 15px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .header-title { flex: 1; text-align: center; font-size: 20px; font-weight: bold; color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+        .sticky-nav { position: sticky; top: 60px; z-index: 990; background: var(--bg); border-bottom: 1px solid var(--border); }
+        .search-area { padding: 10px 15px; display: flex; align-items: center; justify-content: center; }
+        .search-box { background: var(--card); border: 1px solid var(--border); border-radius: 30px; display: flex; align-items: center; padding: 0 15px; width: 100%; max-width: 500px; }
+        .search-box input { background: transparent; border: none; color: var(--text); padding: 12px 10px; width: 100%; outline: none; font-size: 14px; }
+        .clear-btn { color: var(--pink); cursor: pointer; font-size: 18px; display: none; margin-left: 5px; }
+        .cat-bar { display: flex; overflow-x: auto; gap: 8px; padding: 5px 15px 12px; scrollbar-width: none; }
+        .cat-bar::-webkit-scrollbar { display: none; }
+        .cat-btn { padding: 6px 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--border); white-space: nowrap; cursor: pointer; transition: 0.3s; font-size: 12px; color: var(--text); }
+        .cat-btn.active { background: var(--neon); color: #000; font-weight: bold; box-shadow: 0 0 8px var(--neon); border: none; }
+        .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: var(--bg); z-index: 2000; transition: 0.4s; border-right: 1px solid var(--border); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+        .sidebar.active { left: 0; }
+        .sidebar-header { padding: 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .nav-item { padding: 18px 25px; display: flex; align-items: center; gap: 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-weight: 500; }
+        .nav-item:hover { background: var(--neon); color: #000; }
+        .switch { position: relative; width: 40px; height: 20px; margin-left: auto; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #555; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--neon); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
+        @media (min-width: 768px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; position: relative; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .card img { width: 100%; height: 180px; object-fit: cover; cursor: pointer; }
+        .avatar { width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; background: linear-gradient(45deg, var(--neon), var(--pink)); font-size: 50px; color: #fff; font-weight: bold; }
+        .card-info { padding: 12px; text-align: center; }
+        .card-info h4 { margin: 0; font-size: 14px; color: var(--neon); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-footer { display: flex; justify-content: space-around; padding: 10px; border-top: 1px solid var(--border); }
+        .foot-item { font-size: 11px; cursor: pointer; text-align: center; opacity: 0.7; transition: 0.2s; }
+        .foot-item i { font-size: 16px; display: block; margin-bottom: 2px; }
+        .foot-item.active i { color: var(--pink); filter: drop-shadow(0 0 5px var(--pink)); }
+        .admin-action { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .action-btn { background: rgba(0,0,0,0.6); color: white; border: none; padding: 8px; border-radius: 50%; cursor: pointer; }
+        .vis-badge { position: absolute; top: 10px; left: 10px; padding: 3px 8px; border-radius: 10px; font-size: 9px; font-weight: bold; color: white; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 4000; padding: 15px; }
+        .modal-content { background: var(--bg); border: 1px solid var(--border); border-radius: 25px; width: 100%; max-width: 850px; padding: 25px; max-height: 94vh; overflow-y: auto; text-align: center; }
+        .rte-box { border: 2px solid var(--border); border-radius: 12px; overflow: hidden; background: white; color: #333; margin-top: 10px; text-align: left; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 6px; background: #f1f5f9; padding: 10px; border-bottom: 2px solid #ddd; }
+        .toolbar button, .toolbar select, .toolbar input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 5px; background: #fff; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .editor { height: 350px; padding: 20px; outline: none; overflow-y: auto; font-size: 16px; line-height: 1.6; background: #fff; color: #000; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, #6366f1 0%, #1e1b4b 100%); display: none; align-items: center; justify-content: center; z-index: 5000; }
+        .login-card { background: white; width: 85%; max-width: 320px; border-radius: 40px; padding: 35px 25px; text-align: center; color: #333; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        .finger-box { background: #0d1b2a; width: 65px; height: 65px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #00d4ff; font-size: 35px; }
+        .login-input { position: relative; margin-top: 20px; text-align: left; }
+        .login-input i { position: absolute; left: 15px; top: 38px; color: #6366f1; font-size: 18px; }
+        .login-input input { width: 100%; padding: 14px 15px 14px 45px; margin-top: 5px; border-radius: 15px; border: 2px solid #e2e8f0; outline: none; box-sizing: border-box; background: #f9fafb; }
+        .login-btn { width: 100%; padding: 16px; border: none; border-radius: 20px; background: linear-gradient(90deg, #22d3ee, #a855f7); color: white; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .admin-header-btns { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .add-btn-static { padding: 10px 20px; border-radius: 10px; border: none; color: white; font-weight: bold; cursor: pointer; }
+        .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--header); text-align: center; padding: 15px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text); z-index: 900; }
+        .scroll-top { position: fixed; bottom: 85px; right: 25px; width: 45px; height: 45px; background: #003366; color: white; border: none; border-radius: 50%; cursor: pointer; display: none; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .copy-btn { float: right; background: var(--neon); border: none; padding: 5px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body data-theme="dark">
+
+<div id="loader"><div class="spinner"></div></div>
+<div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; z-index:1999;" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+
+<div id="loginOverlay">
+    <div class="login-card">
+        <div class="finger-box"><i class="fas fa-fingerprint"></i></div>
+        <h2 style="margin:0;">DATA MANAGER</h2>
+        <p style="font-size:11px; color:gray; font-weight:bold;">Secure Access Portal</p>
+        <div class="login-input"><label style="font-size:11px; font-weight:bold; margin-left:5px;">USER ID</label><i class="fas fa-user-circle"></i><input type="text" id="uid" placeholder="Enter ID"></div>
+        <div class="login-input"><label style="font-size:11px; font-weight:bold; margin-left:5px;">SECURITY KEY</label><i class="fas fa-key"></i><input type="password" id="pass" placeholder="Enter Key"></div>
+        <button class="login-btn" onclick="handleLogin()">SIGN IN SYSTEM</button>
+        <p onclick="toggleModal('loginOverlay', false)" style="cursor:pointer; color:#6366f1; font-weight:bold; font-size:12px; margin-top:15px;">Guest Access</p>
+    </div>
+</div>
+
+<header>
+    <i class="fas fa-bars" style="cursor:pointer; font-size:22px; color:var(--neon);" onclick="toggleSidebar(true)"></i>
+    <div class="header-title">PDF MANAGER</div>
+    <i class="fas fa-sync-alt" style="cursor:pointer; color:var(--neon);" onclick="loadData()"></i>
+</header>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <span style="font-weight:bold; color:var(--neon); font-size:18px;">MENU</span>
+        <i class="fas fa-times" style="cursor:pointer; color:var(--pink);" onclick="toggleSidebar(false)"></i>
+    </div>
+    <div class="nav-item" onclick="showPage('dashboard')"><i class="fas fa-home"></i> Dashboard</div>
+    <div class="nav-item" id="nav-pdf" style="display:none;" onclick="showPage('pdf-manage')"><i class="fas fa-file-pdf"></i> Management</div>
+    <div class="nav-item" id="nav-persona" style="display:none;" onclick="showPage('persona-manage')"><i class="fas fa-user-secret"></i> My Personal</div>
+    <div class="nav-item">
+        <i class="fas fa-moon"></i> Night Mode
+        <label class="switch"><input type="checkbox" id="themeToggler" checked onchange="toggleTheme()"><span class="slider"></span></label>
+    </div>
+    <hr style="opacity:0.1;">
+    <div class="nav-item" id="btn-login" onclick="toggleModal('loginOverlay', true)"><i class="fas fa-lock"></i> Admin Login</div>
+    <div class="nav-item" id="btn-logout" style="display:none;" onclick="logout()"><i class="fas fa-power-off"></i> Logout</div>
+</div>
+
+<div id="page-dashboard">
+    <div class="sticky-nav">
+        <div class="search-area">
+            <div class="search-box">
+                <i class="fas fa-search" style="opacity:0.5; margin-right:10px;"></i>
+                <input type="text" id="searchInput" placeholder="Search data..." oninput="handleSearch(this.value)">
+                <i class="fas fa-times-circle clear-btn" id="clearBtn" onclick="resetSearch()"></i>
+            </div>
+        </div>
+        <div class="cat-bar" id="catBar">
+            <button class="cat-btn active" onclick="filterByCat('All', this)">All</button>
+        </div>
+    </div>
+    <div class="grid" id="mainGrid"></div>
+</div>
+
+<div id="page-pdf-manage" style="display:none; padding:15px;">
+    <div class="admin-header-btns"><button class="add-btn-static" style="background:var(--pink);" onclick="openForm('PDF')"><i class="fas fa-plus"></i> Add PDF</button></div>
+    <div class="grid" id="pdfGrid"></div>
+</div>
+
+<div id="page-persona-manage" style="display:none; padding:15px;">
+    <div class="admin-header-btns"><button class="add-btn-static" style="background:var(--neon);" onclick="openForm('PERSONA')"><i class="fas fa-plus"></i> Add Persona</button></div>
+    <div class="grid" id="personaGrid"></div>
+</div>
+
+<!-- Editor Modal -->
+<div class="modal" id="formModal">
+    <div class="modal-content">
+        <h3 id="formTitle">Manage Data</h3>
+        <input type="hidden" id="edit-id"><input type="hidden" id="edit-type">
+        <input type="text" id="f-title" placeholder="Title *" required style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text);">
+        <input type="text" id="f-cat" placeholder="Category" style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text);">
+        <input type="text" id="f-img" placeholder="Image URL" style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text);">
+        <div id="pdf-fields"><input type="text" id="f-pdf" placeholder="PDF URL *" style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text);"></div>
+        <div id="persona-fields">
+            <div class="rte-box">
+                <div class="toolbar">
+                    <button onclick="exec('undo')"><i class="fas fa-undo"></i></button>
+                    <button onclick="exec('redo')"><i class="fas fa-redo"></i></button>
+                    <button onclick="exec('bold')">B</button><button onclick="exec('italic')">I</button><button onclick="exec('underline')">U</button>
+                    <select onchange="exec('fontSize', this.value)"><option value="3">Size</option><option value="1">S</option><option value="3">M</option><option value="5">L</option><option value="7">XL</option></select>
+                    <input type="color" onchange="exec('foreColor', this.value)" title="Text">
+                    <input type="color" onchange="exec('hiliteColor', this.value)" title="Highlight">
+                    <button onclick="exec('justifyLeft')"><i class="fas fa-align-left"></i></button>
+                    <button onclick="exec('justifyCenter')"><i class="fas fa-align-center"></i></button>
+                    <button onclick="exec('insertOrderedList')"><i class="fas fa-list-ol"></i></button>
+                    <button onclick="document.getElementById('fileInp').click()"><i class="fas fa-image"></i> Gallery</button>
+                    <button onclick="doPaste()" style="background:#ffecb3; color:black">PASTE</button>
+                </div>
+                <div id="editor" class="editor" contenteditable="true"></div>
+                <input type="file" id="fileInp" accept="image/*" style="display:none" onchange="uploadToEditor(this)">
+            </div>
+        </div>
+        <button class="login-btn" style="margin-top:20px;" onclick="handleSave()">SAVE DATA</button>
+        <button onclick="toggleModal('formModal', false)" style="background:none; border:none; color:gray; cursor:pointer; margin-top:10px;">Cancel</button>
+    </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal" id="viewModal">
+    <div class="modal-content" style="text-align:left; position:relative; max-width:850px;">
+        <button onclick="copyData()" class="copy-btn"><i class="fas fa-copy"></i> Copy</button>
+        <h2 id="viewTitle" style="color:var(--neon); margin:0;"></h2>
+        <hr style="opacity:0.1; margin:15px 0;">
+        <div id="viewBody" style="line-height:1.7;"></div>
+        <button class="login-btn" onclick="toggleModal('viewModal', false)" style="width:auto; padding:12px 40px; margin-top:20px;">Close Window</button>
+    </div>
+</div>
+
+<footer class="footer">Made with 💡 by Molla | Powered by GitHub Pages</footer>
+<button id="upBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})" class="scroll-top"><i class="fas fa-chevron-up"></i></button>
+
+<script>
+    // --- GitHub Pages Configuration ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwt4z69vcEbJzG0dgPmrOcIt3bWzQkhoUEDd8cl7h36BsSAoaX1lWWBaNLF_Fs9lEiKfg/exec"; 
+    const SECRET_TOKEN = "ASV_ULTRA_PRO_SECRET"; 
+
+    let allData = []; let isAdmin = false;
+
+    async function runGAS(action, payload = {}) {
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ token: SECRET_TOKEN, action, payload })
+            });
+            return await response.json();
+        } catch (e) { 
+            console.error(e); 
+            return { status: "Error", message: "Network Error" }; 
+        }
+    }
+
+    function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
+    function toggleSidebar(s) { 
+        document.getElementById('sidebar').classList.toggle('active', s); 
+        document.getElementById('sidebarOverlay').style.display = s ? 'block' : 'none';
+    }
+    function toggleModal(id, s) { document.getElementById(id).style.display = s ? 'flex' : 'none'; }
+    function exec(c, v=null) { document.execCommand(c, false, v); }
+
+    function toggleTheme() {
+        const isDark = document.getElementById('themeToggler').checked;
+        document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    async function doPaste() {
+        try { const t = await navigator.clipboard.readText(); document.execCommand('insertHTML', false, t.replace(/\n/g, '<br>')); }
+        catch(e){ swal("Error", "Clipboard blocked!", "info"); }
+    }
+
+    function uploadToEditor(inp) {
+        if (!inp.files[0]) return;
+        const r = new FileReader();
+        r.onload = async function(e) {
+            showLoader(true);
+            const url = await runGAS('uploadImage', { base64Data: e.target.result, fileName: inp.files[0].name });
+            showLoader(false);
+            if(url && url.startsWith("http")) exec('insertImage', url);
+            else swal("Error", url, "error");
+        };
+        r.readAsDataURL(inp.files[0]);
+    }
+
+    async function handleLogin() {
+        const u = document.getElementById('uid').value, p = document.getElementById('pass').value;
+        showLoader(true);
+        const res = await runGAS('checkLogin', { uid: u, pass: p });
+        showLoader(false);
+        if(res.status === "Success") {
+            isAdmin = true; swal("Authorized", res.message, "success");
+            toggleModal('loginOverlay', false); toggleSidebar(false); updateUI();
+        } else swal("Failed", res.message, "error");
+    }
+
+    function logout() {
+        swal({ title: "Logout?", text: "Exit Admin Session!", icon: "warning", buttons: true, dangerMode: true }).then(will => {
+            if (will) { isAdmin = false; updateUI(); showPage('dashboard'); toggleSidebar(false); swal("Logged Out", "Session Closed", "info"); }
+        });
+    }
+
+    function updateUI() {
+        document.getElementById('nav-pdf').style.display = isAdmin ? 'flex' : 'none';
+        document.getElementById('nav-persona').style.display = isAdmin ? 'flex' : 'none';
+        document.getElementById('btn-login').style.display = isAdmin ? 'none' : 'flex';
+        document.getElementById('btn-logout').style.display = isAdmin ? 'flex' : 'none';
+        renderGrids();
+    }
+
+    function showPage(p) {
+        document.getElementById('page-dashboard').style.display = p === 'dashboard' ? 'block' : 'none';
+        document.getElementById('page-pdf-manage').style.display = p === 'pdf-manage' ? 'block' : 'none';
+        document.getElementById('page-persona-manage').style.display = p === 'persona-manage' ? 'block' : 'none';
+        toggleSidebar(false);
+    }
+
+    async function loadData() {
+        showLoader(true);
+        const data = await runGAS('getAllData');
+        allData = data || [];
+        renderGrids(); renderCats(); showLoader(false);
+    }
+
+    function renderGrids() {
+        const main = document.getElementById('mainGrid'), pdfG = document.getElementById('pdfGrid'), perG = document.getElementById('personaGrid');
+        main.innerHTML = ''; pdfG.innerHTML = ''; perG.innerHTML = '';
+
+        allData.forEach(item => {
+            const isVisible = (item.Status === 'Y');
+            const imgHtml = item.Image_URL ? `<img src="${item.Image_URL}" onclick="openItem('${item.ID}')">` : `<div class="avatar" onclick="openItem('${item.ID}')">${item.Title.charAt(0)}</div>`;
+            
+            if(isVisible) {
+                main.innerHTML += `<div class="card">${imgHtml}<div class="card-info"><h4>${item.Title}</h4>
+                    <div class="card-footer">
+                        <div class="foot-item ${item.Favorite==='Y'?'active':''}" onclick="fb('${item.ID}','fav')"><i class="fas fa-heart"></i>Fav</div>
+                        <div class="foot-item" onclick="fb('${item.ID}','like')"><i class="fas fa-thumbs-up"></i> ${item.Like||0}</div>
+                        <div class="foot-item" onclick="fb('${item.ID}','dislike')"><i class="fas fa-thumbs-down"></i> ${item.Dislike||0}</div>
+                    </div></div></div>`;
+            }
+
+            if(isAdmin) {
+                const adminHtml = `<div class="card">
+                    <div class="vis-badge" style="background:${isVisible?'#22c55e':'#ef4444'}">${isVisible?'LIVE':'HIDDEN'}</div>
+                    ${imgHtml}
+                    <div class="admin-action">
+                        <button onclick="toggleView('${item.ID}', '${item.Status}')" class="action-btn"><i class="fas ${isVisible?'fa-eye':'fa-eye-slash'}"></i></button>
+                        <button onclick="editItem('${item.ID}')" class="action-btn" style="color:orange"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteItem('${item.ID}')" class="action-btn" style="color:red"><i class="fas fa-trash"></i></button>
+                    </div><div class="card-info"><h4>${item.Title}</h4></div></div>`;
+                if(item.dataType === 'PERSONA') perG.innerHTML += adminHtml; else pdfG.innerHTML += adminHtml;
+            }
+        });
+    }
+
+    async function toggleView(id, currentStatus) {
+        showLoader(true);
+        const msg = await runGAS('toggleVisibility', { id, currentStatus });
+        showLoader(false); loadData(); swal("Success", msg, "success");
+    }
+
+    function openItem(id) {
+        const b = allData.find(x => x.ID == id);
+        if(b.dataType === "PERSONA") {
+            document.getElementById('viewTitle').innerText = b.Title;
+            document.getElementById('viewBody').innerHTML = b.My_Data;
+            toggleModal('viewModal', true);
+        } else if(b.PDF_URL) window.open(b.PDF_URL, '_blank');
+    }
+
+    function openForm(type) {
+        document.getElementById('edit-id').value = ''; document.getElementById('edit-type').value = type;
+        document.getElementById('f-title').value = ''; document.getElementById('f-cat').value = '';
+        document.getElementById('f-img').value = ''; document.getElementById('f-pdf').value = '';
+        document.getElementById('editor').innerHTML = '';
+        document.getElementById('pdf-fields').style.display = type === 'PDF' ? 'block' : 'none';
+        document.getElementById('persona-fields').style.display = type === 'PERSONA' ? 'block' : 'none';
+        toggleModal('formModal', true);
+    }
+
+    function editItem(id) {
+        const b = allData.find(x => x.ID == id);
+        document.getElementById('edit-id').value = b.ID;
+        document.getElementById('edit-type').value = b.dataType;
+        document.getElementById('f-title').value = b.Title;
+        document.getElementById('f-cat').value = b.Category;
+        document.getElementById('f-img').value = b.Image_URL;
+        document.getElementById('f-pdf').value = b.PDF_URL;
+        document.getElementById('editor').innerHTML = b.My_Data || "";
+        document.getElementById('pdf-fields').style.display = b.dataType === 'PDF' ? 'block' : 'none';
+        document.getElementById('persona-fields').style.display = b.dataType === 'PERSONA' ? 'block' : 'none';
+        toggleModal('formModal', true);
+    }
+
+    async function handleSave() {
+        const type = document.getElementById('edit-type').value;
+        const data = {
+            ID: document.getElementById('edit-id').value, Title: document.getElementById('f-title').value,
+            Category: document.getElementById('f-cat').value, Image_URL: document.getElementById('f-img').value,
+            PDF_URL: document.getElementById('f-pdf').value, My_Data: document.getElementById('editor').innerHTML
+        };
+        showLoader(true);
+        const action = data.ID ? 'updateData' : 'saveData';
+        const res = await runGAS(action, { data, type });
+        showLoader(false); swal("Done", res, "success"); toggleModal('formModal', false); loadData();
+    }
+
+    async function deleteItem(id) {
+        const will = await swal({ title: "Delete?", icon: "warning", buttons: true, dangerMode: true });
+        if(will) { 
+            showLoader(true); 
+            const res = await runGAS('deleteData', { id });
+            showLoader(false); swal("Deleted", res, "success"); loadData(); 
+        }
+    }
+
+    function copyData() {
+        const range = document.createRange(); range.selectNode(document.getElementById('viewBody'));
+        window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
+        document.execCommand("copy"); swal("Copied!", "Formatting preserved.", "success");
+    }
+
+    async function fb(id, t) {
+        const b = allData.find(x => x.ID == id);
+        if(t==='fav') b.Favorite = (b.Favorite === 'Y' ? 'N' : 'Y');
+        else if(t==='like') b.Like = (parseInt(b.Like)||0)+1;
+        else if(t==='dislike') b.Dislike = (parseInt(b.Dislike)||0)+1;
+        renderGrids();
+        await runGAS('updateFeedback', { id, type: t });
+    }
+
+    function renderCats() {
+        const bar = document.getElementById('catBar');
+        const cats = [...new Set(allData.filter(b=>b.Status==='Y').map(b => b.Category).filter(c => c))];
+        bar.innerHTML = `<button class="cat-btn active" onclick="filterByCat('All', this)">All</button>`;
+        cats.forEach(c => bar.innerHTML += `<button class="cat-btn" onclick="filterByCat('${c}', this)">${c}</button>`);
+    }
+
+    function filterByCat(cat, btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+        const cards = document.querySelectorAll('#mainGrid .card');
+        const visibleData = allData.filter(b => b.Status === 'Y');
+        visibleData.forEach((b, i) => { if(cards[i]) cards[i].style.display = (cat==='All'||b.Category===cat) ? 'block' : 'none'; });
+    }
+
+    function handleSearch(v) { document.getElementById('clearBtn').style.display = v.length > 0 ? 'block' : 'none'; filterData(); }
+    function filterData() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('#mainGrid .card');
+        const visibleData = allData.filter(b => b.Status === 'Y');
+        visibleData.forEach((b, i) => { if(cards[i]) cards[i].style.display = b.Title.toLowerCase().includes(q) ? 'block' : 'none'; });
+    }
+    function resetSearch() { document.getElementById('searchInput').value = ''; handleSearch(''); }
+
+    window.onscroll = () => { document.getElementById('upBtn').style.display = window.scrollY > 300 ? 'block' : 'none'; };
+    window.onload = () => {
+        const s = localStorage.getItem('theme') || 'dark'; document.body.setAttribute('data-theme', s);
+        document.getElementById('themeToggler').checked = (s === 'dark'); 
+        loadData();
+    };
+</script>
+</body>
+</html>

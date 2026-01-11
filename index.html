@@ -70,7 +70,7 @@
         .login-input { position: relative; margin-top: 20px; text-align: left; }
         .login-input i { position: absolute; left: 15px; top: 38px; color: #6366f1; font-size: 18px; }
         .login-input input { width: 100%; padding: 14px 15px 14px 45px; margin-top: 5px; border-radius: 15px; border: 2px solid #e2e8f0; outline: none; box-sizing: border-box; background: #f9fafb; }
-        .login-btn { width: 100%; padding: 16px; border: none; border-radius: 20px; background: linear-gradient(90deg, #22d3ee, #a855f7); color: white; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .login-btn { width: 100%; padding: 16px; border: none; border-radius: 20px; background: linear-gradient(90deg, #22d3ee, #a855f7); color: white; font-weight: bold; cursor: pointer; margin-top: 20px; margin-bottom: 20px; }
         .admin-header-btns { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .add-btn-static { padding: 10px 20px; border-radius: 10px; border: none; color: white; font-weight: bold; cursor: pointer; }
         .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--header); text-align: center; padding: 15px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text); z-index: 900; }
@@ -181,10 +181,10 @@
 <div class="modal" id="viewModal">
     <div class="modal-content" style="text-align:left; position:relative; max-width:300px;">
         <button onclick="copyData()" class="copy-btn"><i class="fas fa-copy"></i> Copy</button>
+        <button class="login-btn" onclick="toggleModal('viewModal', false)">Close Window</button>
         <h2 id="viewTitle" style="color:var(--neon); margin:0;"></h2>
         <hr style="opacity:0.1; margin:15px 0;">
         <div id="viewBody" style="line-height:1.7;"></div>
-        <button class="login-btn" onclick="toggleModal('viewModal', false)" style="width:auto; padding:12px 40px; margin-top:20px;">Close Window</button>
     </div>
 </div>
 
